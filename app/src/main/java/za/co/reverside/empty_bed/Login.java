@@ -1,6 +1,8 @@
 package za.co.reverside.empty_bed;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
@@ -10,28 +12,22 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.gson.Gson;
-
-import org.json.JSONObject;
-
+import android.widget.Toast;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kosalgeek.genasync12.AsyncResponse;
+import com.kosalgeek.genasync12.PostResponseAsyncTask;
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
-
-import za.co.reverside.empty_bed.models.LoginResponse;
+import za.co.reverside.empty_bed.config.IP_Address;
+import za.co.reverside.empty_bed.domain.Account;
 
 public class Login extends AppCompatActivity {
 
     public static final String PREFS = "prefFile";
-    private RequestQueue requestQueue;
-    private View view;
     private Button loginButton;
     private SharedPreferences sharedPreferences;
+    private final String loginURL =  IP_Address.getIp() + "api/login";
+    private SharedPreferences preferences;
 
     ImageView sback;
     EditText usernameImgView, passwordImgView;
@@ -40,6 +36,7 @@ public class Login extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
         sback = (ImageView)findViewById(R.id.signingin);
         sback.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -49,126 +46,79 @@ public class Login extends AppCompatActivity {
             }
         });
 
+        customfonts.MyTextView loginButton =  findViewById(R.id.loginButton);
+        final EditText username = findViewById(R.id.username);
+        final EditText password = findViewById(R.id.password);
 
-        this.initializeGadgets();
-        this.loginButton.setOnClickListener(doLogin());
-        this.requestQueue = Volley.newRequestQueue(view.getContext());
-    }
-
-    private void initializeGadgets(){
-
-        this.usernameImgView = view.findViewById(R.id.username);
-        this.passwordImgView = view.findViewById(R.id.password);
-        this.loginButton = view.findViewById(R.id.loginButton);
-    }
-
-    private View.OnClickListener doLogin(){
-        View.OnClickListener accessApp = new View.OnClickListener() {
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                loginLogic();
-
-
-            }
-        };
-        return accessApp;
-    }
-
-    private void loginLogic(){
-
-        String username = usernameImgView.getText().toString();
-        String password = passwordImgView.getText().toString();
-        String url = "http://45.79.13.122:8080/swagger-ui.html#!/account45service/loginUsingPOST";
-        final Gson gson = new Gson();
-
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("username", username);
-        params.put("password", password);
-
-        JSONObject loginObject = new JSONObject(params);
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-
-                Request.Method.POST,
-                url,
-                loginObject,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-
-                        LoginResponse loginResponse = gson.fromJson(String.valueOf(response), LoginResponse.class);
-                        Log.e("Login response :", loginResponse.getUser().getUserName() + " has " + loginResponse.getMessageResponse());
-
-                        if(loginResponse.getUser().getUserName() != null){
-
-                            sharedPreferences = getActivity().getSharedPreferences("LoggedInUser", Context.MODE_PRIVATE);
-                            SharedPreferences.Editor editor = sharedPreferences.edit();
-                            editor.putString("user-logged-in", gson.toJson(loginResponse.getUser()));
-                            editor.apply();
-
-                            customerID = loginResponse.getUser().getUserID();
-                            driverID = loginResponse.getUser().getUserID();
-                            supplierID = loginResponse.getUser().getUserID();
-                            String userRole = loginResponse.getUser().getRoles().get(0).getName();
-                            redirectBasedOnRole(userRole);
-
-
-
-                        }
-                        else if(loginResponse.getUser().getUserName() == null){
-
-                            AlertDialog.Builder builder = new AlertDialog.Builder(getContext())
-                                    .setTitle("Login response")
-                                    .setMessage(loginResponse.getMessageResponse() + "\n" + "Forgotten password?")
-                                    .setPositiveButton("Recover password", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-
-                                            startActivity(new Intent(getContext(), RecoverPasswordActivity.class));
-                                        }
-                                    })
-                                    .setNegativeButton("Close", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-
-                                        }
-                                    });
-
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                        }
-
-
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                        error.printStackTrace();
-                    }
+                if(username.getText().length() == 0 || password.getText().length() == 0){
+                    AlertDialog.Builder dialog = new AlertDialog.Builder(Login.this);
+                    dialog.setMessage("Login Button Clicked")
+                            .setCancelable(false)
+                            .setNegativeButton("Okay", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.cancel();
+                                }
+                            });
+                    AlertDialog box = dialog.create();
+                    box.setTitle("Login Message");
+                    box.show();
                 }
-        ){
+                else{
+                    System.out.println(username.getText().length()+"");
+                    doLogin(username.getText().toString(), password.getText().toString());
+                }
 
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put(ApplicationHeaders.HEADERS, ApplicationHeaders.HEADERSVALUE);
-
-                return headers;
             }
-        };
-
-        requestQueue.add(jsonObjectRequest);
+        });
 
     }
 
+    public void doLogin(String username, String password){
+
+        final HashMap postData = new HashMap();
+        postData.put("username", username);
+        postData.put("password", password);
+
+        PostResponseAsyncTask loginTask = new PostResponseAsyncTask(Login.this, postData, new AsyncResponse() {
+            @Override
+            public void processFinish(String result) {
+
+                if(result.isEmpty())
+                    Toast.makeText(Login.this, "Login Unsuccessful", Toast.LENGTH_SHORT).show();
+                else{
+
+                    Account account = new Account();
+                    try {
+                        account = new ObjectMapper().readValue(result, Account.class);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    Toast.makeText(Login.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                    preferences = getSharedPreferences(PREFS, 0);
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putString("username", account.getName());
+                    editor.putString("token", account.getToken());
+                    editor.commit();
+
+                    //Open search page
+                    Intent intent = new Intent(Login.this, SearchActivity.class);
+                    startActivity(intent);
+                }
+            }
+        });
+
+        loginTask.execute(loginURL);
+
+    }
 
     public void hideKeyboard(View view) {
         InputMethodManager inputMethodManager=(InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(),0);
+
     }
 }
 

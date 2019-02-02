@@ -1,9 +1,9 @@
-apply plugin: 'co.android.application'
+apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "co.co.reverside.bluewhite"
+        applicationId "za.co.reverside.empty_bed"
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 1
@@ -20,13 +20,25 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'co.google.code.gson:gson:2.8.2'
-    implementation 'co.android.volley:volley:1.1.0'
+
+    implementation files('libs/GenAsync.1.2.jar')
+    implementation files('libs/gson-2.3.1.jar')
+    implementation files('libs/KGJsonConverter.jar')
+
+    implementation 'com.android.support:design:26.1.0'
     compileOnly "org.projectlombok:lombok:1.16.16"
-    implementation 'co.android.support:appcompat-v7:26.0.1'
-    implementation 'co.android.support.constraint:constraint-layout:1.0.0-alpha3'
+    annotationProcessor "org.projectlombok:lombok:1.16.16" // add this
+    compileOnly 'org.glassfish:javax.annotation:10.0-b28'
+
+    implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+    implementation 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
+
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
+
+    implementation 'com.android.support:appcompat-v7:26.0.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.0-alpha3'
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'co.android.support.test.espresso:espresso-core:2.2.2'
-    androidTestImplementation 'co.android.support.test:runner:0.5'
-    androidTestImplementation 'co.android.support:support-annotations:23.1.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
+    androidTestImplementation 'com.android.support.test:runner:0.5'
+    androidTestImplementation 'com.android.support:support-annotations:23.1.1'
 }

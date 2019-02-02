@@ -133,7 +133,7 @@
                 android:layout_marginBottom="10dp"
                 android:background="#FFF"/>
             <customfonts.MyTextView
-                android:id="@+id/register"
+                android:id="@+id/registerButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/angle"
